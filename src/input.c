@@ -57,6 +57,18 @@ static uint8_t joy_readbit[2];
 static uint8_t joy[4] = { 0, 0, 0, 0 };
 static uint8_t LastStrobe;
 
+/* The Famicom's Controller II microphone. It is not a button: the pad puts a
+ * one-bit threshold detector on the waveform and the console reads it at $4016
+ * bit 2, so a game looks for that bit FLICKERING while there is sound rather
+ * than for it being held. MicBit therefore toggles on every read while the
+ * frontend says someone is making a noise, and is a steady 0 in silence.
+ *
+ * Controller II has no Start button -- the microphone and its volume slider sit
+ * where Start and Select are on Controller I -- so player 2's Start is also
+ * nullified while this is on. */
+static uint8_t MicBit;
+static int MicEnabled;
+
 extern uint8_t coinon;
 
 static int FSDisable = 0; /* Set to 1 if NES-style four-player adapter is disabled. */
@@ -84,6 +96,22 @@ static DECLFR(JPRead)
 	if (FCExp)
 		if (FCExp->Read)
 			ret = FCExp->Read(A & 1, ret);
+
+	if (MicEnabled) {
+		if (A & 1) {
+			/* $4017: the pad this microphone is part of has no Start. */
+			if (joy_readbit[1] == 4)
+				ret &= 0xFE;
+		} else if (joy[1] & JOY_START) {
+			/* $4016 bit 2, and only $4016. fceux, which this core came from,
+			 * sets it on both, reporting a microphone to $4017 as well. */
+			MicBit ^= 1;
+			if (MicBit)
+				ret |= 0x04;
+		} else {
+			MicBit = 0;
+		}
+	}
 
 	ret |= X.DB & 0xC0;
 
@@ -399,10 +427,19 @@ void FCEUI_DisableFourScore(int s) {
 	FSDisable = s;
 }
 
+void FCEUI_SetFamicomMicrophone(int enabled) {
+	MicEnabled = enabled ? 1 : 0;
+	if (!MicEnabled)
+		MicBit = 0;
+}
+
 SFORMAT FCEUCTRL_STATEINFO[] = {
 	{ joy_readbit, 2, "JYRB" },
 	{ joy, 4, "JOYS" },
 	{ &LastStrobe, 1, "LSTS" },
+	/* Saved, unlike in fceux: a state restored mid-flicker would otherwise
+	 * resume on the opposite phase. */
+	{ &MicBit, 1, "MICB" },
 	{ 0 }
 };
 

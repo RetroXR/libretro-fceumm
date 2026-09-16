@@ -47,6 +47,11 @@ void FCEUI_SetInput(int port, int type, void *ptr, int attrib);
 void FCEUI_SetInputFC(int type, void *ptr, int attrib);
 void FCEUI_DisableFourScore(int s);
 
+/* The Famicom's Controller II microphone: while it is on, player 2's Start
+ * button is the noise the player is making rather than a button, and player 2
+ * has no Start -- see JPRead. */
+void FCEUI_SetFamicomMicrophone(int enabled);
+
 #define SI_UNSET     -1
 #define SI_NONE      0
 #define SI_GAMEPAD   1

@@ -273,6 +273,10 @@ enum RetroZapperInputModes zappermode = RetroCLightgun;
 enum RetroArkanoidInputModes{RetroArkanoidMouse, RetroArkanoidPointer, RetroArkanoidAbsMouse, RetroArkanoidStelladaptor};
 enum RetroArkanoidInputModes arkanoidmode = RetroArkanoidMouse;
 static int mouseSensitivity = 100;
+
+/* Whether the Famicom's Controller II microphone is on, so the engage line is
+ * logged when it changes rather than every time the options are re-read. */
+static int famicom_microphone = 0;
 extern int switchZapper;
 
 static bool libretro_supports_bitmasks = false;
@@ -2482,6 +2486,25 @@ static void check_variables(bool startup)
       }
    }
 
+   var.key = "fceumm_famicom_microphone";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      int wanted = !strcmp(var.value, "enabled");
+
+      if (wanted != famicom_microphone)
+      {
+         famicom_microphone = wanted;
+         FCEUI_SetFamicomMicrophone(wanted);
+         /* log_cb at WARN rather than FCEU_printf, and only when it changes:
+          * FCEUD_Message logs at INFO, which frontends routinely drop, and
+          * this is the only way to tell a microphone that is really live from
+          * one merely offered. */
+         log_cb.log(RETRO_LOG_WARN, "Famicom Controller II microphone %s\n",
+               wanted ? "on -- player 2's Start is now the noise you make" : "off");
+      }
+   }
+
    var.key = "fceumm_turbo_delay";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -3832,7 +3855,10 @@ bool retro_load_game(const struct retro_game_info *info)
       { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "A" },
       { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3,     "A+B" },
       { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
+      /* Player 2's Start is the Controller II microphone when that option
+       * is on; L3 and R3 are taken here by A+B and Turbo A+B, and a
+       * Famicom's second pad has no Start to lose. */
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start / (Famicom) Microphone" },
       { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Turbo A" },
       { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Turbo B" },
       { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,     "Turbo A+B" },
@@ -3892,7 +3918,10 @@ bool retro_load_game(const struct retro_game_info *info)
       { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "A" },
       { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3,     "A+B" },
       { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
+      /* Player 2's Start is the Controller II microphone when that option
+       * is on; L3 and R3 are taken here by A+B and Turbo A+B, and a
+       * Famicom's second pad has no Start to lose. */
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start / (Famicom) Microphone" },
       { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Turbo A" },
       { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Turbo B" },
       { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,     "Turbo A+B" },

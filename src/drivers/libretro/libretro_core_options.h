@@ -749,6 +749,20 @@ struct retro_core_option_v2_definition option_defs[] = {
       "None",
    },
    {
+      "fceumm_famicom_microphone",
+      "Famicom Controller II Microphone",
+      NULL,
+      "The microphone built into a Famicom's second controller, which a few games listen to: Zelda's Pols Voice, Takeshi no Chousenjou, Bokosuka Wars, Hikari Shinwa. Player 2's Start button becomes the noise you are making, and player 2 loses Start -- as on the hardware, where that pad has none. Does nothing on an NES.",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       "fceumm_turbo_delay",
       "Turbo Delay (in frames)",
       NULL,
